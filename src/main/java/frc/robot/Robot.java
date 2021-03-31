@@ -33,8 +33,8 @@ public class Robot extends TimedRobot {
   private CANSparkMax m_shooter;
   private CANSparkMax m_accelerator;
   private CANSparkMax m_feeder;
-  private static final int dtCurrentLimit = 80;
-  private static final int accelCurrentLimit = 20;
+  private static final int dtCurrentLimit = 80; //per-motor current limit for the robot; 80A tends to be safe on carpet unless the battery is too weak
+  private static final int accelCurrentLimit = 20; //current limiting for the two accelerator rollers
   private static final double bumperTurnRate = 0.5; //smaller numbers mean more aggressive turning
 
   @Override
@@ -73,13 +73,20 @@ public class Robot extends TimedRobot {
     m_accelerator.restoreFactoryDefaults();
     m_feeder.restoreFactoryDefaults();
 
+    // Two of our drivetrain motors act as followers of the other one on the same side, let's make that official.
+    // You'll notice we almost never talk about them again; that's intentional.
+
     m_leftFollow.follow(m_leftMotor);
     m_rightFollow.follow(m_rightMotor);
+
+    // Now, let's set current limiting on our motors.
     m_leftMotor.setSmartCurrentLimit(dtCurrentLimit);
     m_leftFollow.setSmartCurrentLimit(dtCurrentLimit);
     m_rightMotor.setSmartCurrentLimit(dtCurrentLimit);
     m_rightFollow.setSmartCurrentLimit(dtCurrentLimit);
     m_accelerator.setSmartCurrentLimit(accelCurrentLimit);
+
+    // Oh, and we have to create the DifferentialDrive for our drivetrain too. Done.
     m_myRobot = new DifferentialDrive(m_leftMotor, m_rightMotor);
 
   }
@@ -107,6 +114,9 @@ public class Robot extends TimedRobot {
         m_driverController.getY(Hand.kLeft)*-1, m_driverController.getX(Hand.kRight)*.8);
     
     
+    // This next section controlls the ball accelerator, feeder roller, and shooter.
+    // You'll notice this is all set off the two Xbox triggers.  It could be better.
+    // I hope you'll make this into a couple PID loops down the road.
     m_shooter.set(1.5*(m_driverController.getTriggerAxis(Hand.kLeft)));
     m_accelerator.set(-1*(m_driverController.getTriggerAxis(Hand.kLeft)));
     m_feeder.set(m_driverController.getTriggerAxis(Hand.kRight));
