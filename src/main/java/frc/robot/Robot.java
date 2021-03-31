@@ -35,7 +35,7 @@ public class Robot extends TimedRobot {
   private CANSparkMax m_feeder;
   private static final int dtCurrentLimit = 80;
   private static final int accelCurrentLimit = 20;
-  private static final double bumperTurnRate = 0.5;
+  private static final double bumperTurnRate = 0.5; //smaller numbers mean more aggressive turning
 
   @Override
   public void robotInit() {
@@ -99,7 +99,7 @@ public class Robot extends TimedRobot {
       m_rightMotor.set(m_driverController.getY(Hand.kRight)*bumperTurnRate);
     }
 
-    // Drive with split arcade drive.
+    // Oh, we don't have bumpers pressed? Drive with split arcade drive.
     // That means that the Y axis of the left stick moves forward
     // and backward, and the X of the right stick turns left and right.
     while (!m_driverController.getBumper(Hand.kLeft) && !m_driverController.getBumper(Hand.kRight))
