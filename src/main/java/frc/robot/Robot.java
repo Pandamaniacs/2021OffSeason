@@ -122,7 +122,7 @@ public class Robot extends TimedRobot {
     // WARNING: Direction and speed of the climbers is untested.
 
     if (m_driverController.getBumper(Hand.kLeft) && m_driverController.getBumper(Hand.kRight)) {
-    // NO REALLY, THIS SPEED AND DIRECTION IS UNTESTED ON LORI.
+    // Lori seems happy with these speeds, but we didn't try climbing with them. Consider increasing to free speed.
       leftClimber.set(0.75);
       rightClimber.set(0.75);
     } else {
