@@ -66,6 +66,7 @@ public class Robot extends TimedRobot {
     m_rightFollow = new CANSparkMax(rightFollowID, MotorType.kBrushless);
     m_shooter = new CANSparkMax(shooterID, MotorType.kBrushless);
     m_accelerator = new CANSparkMax(acceleratorID, MotorType.kBrushless);
+    // The feeder runs a 775pro motor, so it is Brushed not Brushless. SPARK MAX supports that.
     m_feeder = new CANSparkMax(feederID, MotorType.kBrushed);
 
     /**
@@ -105,10 +106,10 @@ public class Robot extends TimedRobot {
     // Now let's drive with split arcade drive.
     // That means that the Y axis of the left stick moves forward
     // and backward, and the X of the right stick turns left and right.
-    // while (!m_driverController.getBumper(Hand.kLeft) && !m_driverController.getBumper(Hand.kRight)) {
+    // Left stick is inverted to get the direction correct.
+    // Right stick has a multiplier to make it less twitchy.
     m_myRobot.arcadeDrive(
     m_driverController.getY(Hand.kLeft)*-1, m_driverController.getX(Hand.kRight)*.8);
-    // } 
     
     // This next section controlls the ball accelerator, feeder roller, and shooter.
     // You'll notice this is all set off the two Xbox triggers.  It could be better.
@@ -119,10 +120,11 @@ public class Robot extends TimedRobot {
     m_feeder.set(m_gunnerController.getTriggerAxis(Hand.kRight));
 
     // Climber action goes here.  Holding both driver bumpers runs the motors.
-    // WARNING: Direction and speed of the climbers is untested.
 
     if (m_driverController.getBumper(Hand.kLeft) && m_driverController.getBumper(Hand.kRight)) {
-    // NO REALLY, THIS SPEED AND DIRECTION IS UNTESTED ON LORI.
+
+    // Lori seems happy with these settings, but you can bump them up. Probably should. Verify ratchet direction before securing them.
+
       leftClimber.set(0.75);
       rightClimber.set(0.75);
     } else {
