@@ -38,13 +38,15 @@ public class Robot extends TimedRobot {
   private CANSparkMax m_feeder;
   private final Timer m_timer = new Timer();
 
-// Here is where you set the current limits for drivetrain and for the accelerator rollers.
-// Consider what the motor and battery will actually sustain, especially if it jams up.
+    // Here is where you set the current limits for drivetrain and for the accelerator rollers.
+    // Consider whether the motor can sustain that current for however long it may be jammed up.
+    // Drivetrains can be more aggressive than conveyors; it's more obvious when the driver needs to back off.
+    // Consult locked rotor or constant current test data on motors.vex.com.
 
-  private static final int dtCurrentLimit = 80; //per-motor current limit for the robot; 80A tends to be safe on carpet unless the battery is too weak
-  private static final int accelCurrentLimit = 20; //current limiting for the two accelerator rollers
+  private static final int dtCurrentLimit = 80; // per-motor current limit for the drivetrain
+  private static final int accelCurrentLimit = 20; // current limiting for the two accelerator rollers; 20A is super safe for a NEO 550.
 
-  // And climbers.
+  // And climbers.  These use the classic SPARK motor controllers.
   Spark leftClimber = new Spark(0);
   Spark rightClimber = new Spark(1);
 
@@ -104,6 +106,24 @@ public class Robot extends TimedRobot {
     m_myRobot = new DifferentialDrive(m_leftMotor, m_rightMotor);
 
 
+  }
+
+  /** This function is run once each time the robot enters autonomous mode. */
+  @Override
+  public void autonomousInit() {
+    m_timer.reset();
+    m_timer.start();
+  }
+
+  /** This function is called periodically during autonomous. */
+  @Override
+  public void autonomousPeriodic() {
+    // Drive for 2 seconds
+    if (m_timer.get() < 2.0) {
+      m_myRobot.arcadeDrive(0.5, 0.0); // drive forwards half speed
+    } else {
+      m_myRobot.stopMotor(); // stop robot
+    }
   }
 
   @Override
