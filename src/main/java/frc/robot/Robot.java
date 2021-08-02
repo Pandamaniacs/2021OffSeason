@@ -36,10 +36,13 @@ public class Robot extends TimedRobot {
   private CANSparkMax m_shooter;
   private CANSparkMax m_accelerator;
   private CANSparkMax m_feeder;
+  private final Timer m_timer = new Timer();
+
+// Here is where you set the current limits for drivetrain and for the accelerator rollers.
+// Consider what the motor and battery will actually sustain, especially if it jams up.
+
   private static final int dtCurrentLimit = 80; //per-motor current limit for the robot; 80A tends to be safe on carpet unless the battery is too weak
   private static final int accelCurrentLimit = 20; //current limiting for the two accelerator rollers
-  private static final double bumperTurnRate = 0.5; //smaller numbers mean more aggressive turning
-  private final Timer m_timer = new Timer();
 
   // And climbers.
   Spark leftClimber = new Spark(0);
@@ -66,13 +69,14 @@ public class Robot extends TimedRobot {
     m_rightFollow = new CANSparkMax(rightFollowID, MotorType.kBrushless);
     m_shooter = new CANSparkMax(shooterID, MotorType.kBrushless);
     m_accelerator = new CANSparkMax(acceleratorID, MotorType.kBrushless);
-    // The feeder runs a 775pro motor, so it is Brushed not Brushless. SPARK MAX supports that.
+    // The feeder runs a 775pro motor unlike the other SPARK MAX controllers that drive NEO-series
+    // motors.  So it gets set up as Brushed, not Brushless.
     m_feeder = new CANSparkMax(feederID, MotorType.kBrushed);
 
     /**
-     * The RestoreFactoryDefaults method ensures settings are cleared. This is important if we stuff a
-     * new SPARK MAX controller into the robot in an emergency, especially if we bum one off another team.
-     * This way, everything is set in code and you only have to set the CAN ID properly.
+     * The RestoreFactoryDefaults method ensures settings are cleared. This is important when you
+     * replace a SPARK MAX; by setting settings here, we don't have to remember all the settings the
+     * dead one had. Everything is in the code, just get the CAN ID right and it'll do the rest.
      */
     m_leftMotor.restoreFactoryDefaults();
     m_rightMotor.restoreFactoryDefaults();
@@ -89,6 +93,7 @@ public class Robot extends TimedRobot {
     m_rightFollow.follow(m_rightMotor);
 
     // Now, let's set current limiting on our motors so the robot doesn't brown out when launching.
+
     m_leftMotor.setSmartCurrentLimit(dtCurrentLimit);
     m_leftFollow.setSmartCurrentLimit(dtCurrentLimit);
     m_rightMotor.setSmartCurrentLimit(dtCurrentLimit);
@@ -108,6 +113,7 @@ public class Robot extends TimedRobot {
     // and backward, and the X of the right stick turns left and right.
     // Left stick is inverted to get the direction correct.
     // Right stick has a multiplier to make it less twitchy.
+    
     m_myRobot.arcadeDrive(
     m_driverController.getY(Hand.kLeft)*-1, m_driverController.getX(Hand.kRight)*.8);
     
