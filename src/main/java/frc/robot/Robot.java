@@ -36,12 +36,17 @@ public class Robot extends TimedRobot {
   private CANSparkMax m_shooter;
   private CANSparkMax m_accelerator;
   private CANSparkMax m_feeder;
-  private static final int dtCurrentLimit = 80; //per-motor current limit for the robot; 80A tends to be safe on carpet unless the battery is too weak
-  private static final int accelCurrentLimit = 20; //current limiting for the two accelerator rollers
-  private static final double bumperTurnRate = 0.5; //smaller numbers mean more aggressive turning
   private final Timer m_timer = new Timer();
 
-  // And climbers.
+    // Here is where you set the current limits for drivetrain and for the accelerator rollers.
+    // Consider whether the motor can sustain that current for however long it may be jammed up.
+    // Drivetrains can be more aggressive than conveyors; it's more obvious when the driver needs to back off.
+    // Consult locked rotor or constant current test data on motors.vex.com.
+
+  private static final int dtCurrentLimit = 80; // per-motor current limit for the drivetrain
+  private static final int accelCurrentLimit = 20; // current limiting for the two accelerator rollers; 20A is super safe for a NEO 550.
+
+  // And climbers.  These use the classic SPARK motor controllers.
   Spark leftClimber = new Spark(0);
   Spark rightClimber = new Spark(1);
 
@@ -66,12 +71,14 @@ public class Robot extends TimedRobot {
     m_rightFollow = new CANSparkMax(rightFollowID, MotorType.kBrushless);
     m_shooter = new CANSparkMax(shooterID, MotorType.kBrushless);
     m_accelerator = new CANSparkMax(acceleratorID, MotorType.kBrushless);
+    // The feeder runs a 775pro motor unlike the other SPARK MAX controllers that drive NEO-series
+    // motors.  So it gets set up as Brushed, not Brushless.
     m_feeder = new CANSparkMax(feederID, MotorType.kBrushed);
 
     /**
-     * The RestoreFactoryDefaults method ensures settings are cleared. This is important if we stuff a
-     * new SPARK MAX controller into the robot in an emergency, especially if we bum one off another team.
-     * This way, everything is set in code and you only have to set the CAN ID properly.
+     * The RestoreFactoryDefaults method ensures settings are cleared. This is important when you
+     * replace a SPARK MAX; by setting settings here, we don't have to remember all the settings the
+     * dead one had. Everything is in the code, just get the CAN ID right and it'll do the rest.
      */
     m_leftMotor.restoreFactoryDefaults();
     m_rightMotor.restoreFactoryDefaults();
@@ -88,6 +95,7 @@ public class Robot extends TimedRobot {
     m_rightFollow.follow(m_rightMotor);
 
     // Now, let's set current limiting on our motors so the robot doesn't brown out when launching.
+
     m_leftMotor.setSmartCurrentLimit(dtCurrentLimit);
     m_leftFollow.setSmartCurrentLimit(dtCurrentLimit);
     m_rightMotor.setSmartCurrentLimit(dtCurrentLimit);
@@ -100,29 +108,65 @@ public class Robot extends TimedRobot {
 
   }
 
+  /** This function is run once each time the robot enters autonomous mode. */
+  @Override
+  public void autonomousInit() {
+    m_timer.reset();
+    m_timer.start();
+  }
+
+  /** This function is called periodically during autonomous. */
+  @Override
+  public void autonomousPeriodic() {
+    // Drive for 2 seconds
+    if (m_timer.get() < 2.0) {
+      m_myRobot.arcadeDrive(0.5, 0.0); // drive forwards half speed
+    } else {
+      m_myRobot.stopMotor(); // stop robot
+    }
+  }
+
   @Override
   public void teleopPeriodic() {
     // Now let's drive with split arcade drive.
     // That means that the Y axis of the left stick moves forward
     // and backward, and the X of the right stick turns left and right.
-    // while (!m_driverController.getBumper(Hand.kLeft) && !m_driverController.getBumper(Hand.kRight)) {
+    // Left stick is inverted to get the direction correct.
+    // Right stick has a multiplier to make it less twitchy.
+    
     m_myRobot.arcadeDrive(
     m_driverController.getY(Hand.kLeft)*-1, m_driverController.getX(Hand.kRight)*.8);
-    // } 
     
     // This next section controlls the ball accelerator, feeder roller, and shooter.
     // You'll notice this is all set off the two Xbox triggers.  It could be better.
     // I hope you'll make this into a couple PID loops down the road.
 
-    m_shooter.set(1.5*(m_gunnerController.getTriggerAxis(Hand.kLeft)));
-    m_accelerator.set(-1*(m_gunnerController.getTriggerAxis(Hand.kLeft)));
+    m_shooter.set(1.0*(m_gunnerController.getTriggerAxis(Hand.kLeft)));
+    m_accelerator.set(-.8*(m_gunnerController.getTriggerAxis(Hand.kLeft)));
     m_feeder.set(m_gunnerController.getTriggerAxis(Hand.kRight));
 
+// Let's do bumper shooting action!
+
+    if (m_gunnerController.getBumper(Hand.kLeft)) {
+      m_shooter.set(.75);
+      m_accelerator.set(-.6);
+    } else {
+      m_shooter.set(0);
+      m_accelerator.set(0);
+    }
+
+    if (m_gunnerController.getBumper(Hand.kRight)) {
+      m_feeder.set(0.5);
+    } else {
+      m_feeder.set(0);
+    }
+
     // Climber action goes here.  Holding both driver bumpers runs the motors.
-    // WARNING: Direction and speed of the climbers is untested.
 
     if (m_driverController.getBumper(Hand.kLeft) && m_driverController.getBumper(Hand.kRight)) {
-    // Lori seems happy with these speeds, but we didn't try climbing with them. Consider increasing to free speed.
+
+    // Lori seems happy with these settings, but you can bump them up. Probably should. Verify ratchet direction before securing them.
+
       leftClimber.set(0.75);
       rightClimber.set(0.75);
     } else {
