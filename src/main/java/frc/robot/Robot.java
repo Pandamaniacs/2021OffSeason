@@ -120,7 +120,7 @@ public class Robot extends TimedRobot {
   public void autonomousPeriodic() {
     // Drive for 2 seconds
     if (m_timer.get() < 2.0) {
-      m_myRobot.arcadeDrive(0.5, 0.0); // drive forwards half speed
+      m_myRobot.arcadeDrive(-0.5, 0.0); // drive forwards half speed; the negative number gets things going forward
     } else {
       m_myRobot.stopMotor(); // stop robot
     }
